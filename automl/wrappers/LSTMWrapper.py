@@ -123,27 +123,26 @@ class LSTMWrapper(BaseWrapper):
         "layers": [.8, .5, .3],
     }]
 
-    @staticmethod
-    def _evaluate(auto_ml, cur_wrapper):
+    def evaluate(self):
         prefix = 'LSTM'
 
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
-        y_val_matrix = auto_ml._create_validation_matrix(
-            cur_wrapper.validation[1].T)
+        y_val_matrix = self.auto_ml._create_validation_matrix(
+            self.validation[1].T)
 
         for c, params in tqdm(enumerate(LSTMWrapper.params_list)):
-            auto_ml.evaluation_results[prefix+str(c)] = {}
-            cur_wrapper.train(params)
+            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.train(params)
 
-            y_pred = np.array(cur_wrapper.predict(
-                cur_wrapper.validation[0], max(auto_ml.important_future_timesteps)))[:, [-(n-1) for n in auto_ml.important_future_timesteps]]
+            y_pred = np.array(self.predict(
+                self.validation[0], max(self.auto_ml.important_future_timesteps)))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(auto_ml.important_future_timesteps), :]
-            auto_ml.evaluation_results[prefix +
-                                       str(c)] = auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
+            self.auto_ml.evaluation_results[prefix +
+                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
 
-            wrapper_list.append(copy.copy(cur_wrapper))
+            wrapper_list.append(copy.copy(self))
 
         return prefix, wrapper_list

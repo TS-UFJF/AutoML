@@ -127,8 +127,8 @@ class AutoML:
 
         wrapper_result_dict = {}
 
-        for cur_wrapper, cur_constructor in zip(self.wrappers.values(), self.wrapper_constructors):
-            prefix, wrapper_list = cur_constructor._evaluate(self, cur_wrapper)
+        for cur_wrapper in self.wrappers.values():
+            prefix, wrapper_list = cur_wrapper.evaluate()
             wrapper_result_dict[prefix] = wrapper_list
 
         # Choose the best model comparing the default prediction metric results
