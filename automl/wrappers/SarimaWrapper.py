@@ -97,32 +97,31 @@ class SarimaWrapper(BaseWrapper):
 
         return prediction.to_numpy()
 
-    @staticmethod
-    def _evaluate(auto_ml, cur_wrapper):
+    def evaluate(self):
         prefix = 'SARIMA'
 
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
 
-        random_params = random.sample(cur_wrapper.params_list, 5)
+        random_params = random.sample(self.params_list, 5)
 
-        y_val_matrix = auto_ml._create_validation_matrix(
-            val_y=cur_wrapper.validation[cur_wrapper.target_label].values.T)
+        y_val_matrix = self.auto_ml._create_validation_matrix(
+            val_y=self.validation[self.target_label].values.T)
 
         for c, params in tqdm(enumerate(random_params)):
 
-            cur_wrapper.train(params)
+            self.train(params)
 
-            auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.auto_ml.evaluation_results[prefix+str(c)] = {}
 
-            y_pred = np.array(cur_wrapper.predict(
-                cur_wrapper.validation, max(auto_ml.important_future_timesteps)))[:, [-(n-1) for n in auto_ml.important_future_timesteps]]
+            y_pred = np.array(self.predict(
+                self.validation, max(self.auto_ml.important_future_timesteps)))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(auto_ml.important_future_timesteps), :]
-            auto_ml.evaluation_results[prefix +
-                                       str(c)] = auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
+            self.auto_ml.evaluation_results[prefix +
+                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
 
-            wrapper_list.append(copy.copy(cur_wrapper))
+            wrapper_list.append(copy.copy(self))
 
         return prefix, wrapper_list

@@ -152,11 +152,13 @@ class TFTWrapper(BaseWrapper):
 
         # if the future steps is less or equals than the oldest lag the model can predict it by default
         if future_steps <= self.oldest_lag:
-            predict = self.model.predict(cur_X, mode='prediction')[0].numpy().tolist()
+            predict = self.model.predict(cur_X, mode='prediction')[
+                0].numpy().tolist()
             return predict[:future_steps]
         else:
             # short cut the auto feed prediction with more reliable prediction
-            predict = self.model.predict(cur_X, mode='prediction')[0].numpy().tolist()
+            predict = self.model.predict(cur_X, mode='prediction')[
+                0].numpy().tolist()
             for new_value in predict:
                 cur_X = append_new_data(cur_X, new_value, date_step)
             y = predict
@@ -273,31 +275,30 @@ class TFTWrapper(BaseWrapper):
         'gradient_clip_val': 0.5,
     }, ]
 
-    @staticmethod
-    def _evaluate(auto_ml, cur_wrapper):
+    def evaluate(self):
         prefix = 'TFT'
 
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
-        y_val_matrix = auto_ml._create_validation_matrix(
-            cur_wrapper.validation[1].values.T)
+        y_val_matrix = self.auto_ml._create_validation_matrix(
+            self.validation[1].values.T)
 
         for c, params in tqdm(enumerate(TFTWrapper.params_list)):
-            auto_ml.evaluation_results[prefix+str(c)] = {}
-            cur_wrapper.train(max_epochs=50, **params)
+            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.train(max_epochs=50, **params)
 
-            y_pred = np.array(cur_wrapper.predict(
-                cur_wrapper.validation[0],
-                future_steps=max(auto_ml.important_future_timesteps),
-                history=cur_wrapper.last_period,
-            ))[:, [-(n-1) for n in auto_ml.important_future_timesteps]]
+            y_pred = np.array(self.predict(
+                self.validation[0],
+                future_steps=max(self.auto_ml.important_future_timesteps),
+                history=self.last_period,
+            ))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(auto_ml.important_future_timesteps), :]
+            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
 
-            auto_ml.evaluation_results[prefix +
-                                 str(c)] = auto_ml._evaluate_model(y_val_matrix.T.squeeze(), y_pred)
+            self.auto_ml.evaluation_results[prefix +
+                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T.squeeze(), y_pred)
 
-            wrapper_list.append(copy.copy(cur_wrapper))
+            wrapper_list.append(copy.copy(self))
 
         return prefix, wrapper_list

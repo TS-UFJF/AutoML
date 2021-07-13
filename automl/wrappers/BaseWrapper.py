@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class BaseWrapper:
     """
     This class exists to give an exemple of what is essential for a 
@@ -74,12 +77,9 @@ class BaseWrapper:
     the arguments that will be evaluated by the method.
     """
 
-    @staticmethod
-    def _evaluate(auto_ml, cur_wrapper):
+    def evaluate(self):
         """
-        This static method recieves the instance of 'auto_ml' that is being executed and 'cur_wrapper' that is the instance of this wrapper being evaluated by auto_ml.
-
-        This method should train 'cur_wrapper' throung all the parameters in 'params_list' and evaluate-it along the way.
+        This method should train this wrapper through all the parameters in 'params_list' and evaluate-it along the way.
         It should add the results of each train as
         'evaluation_results[prefix + str(index of the params in 'params_list')]
 

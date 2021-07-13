@@ -107,33 +107,32 @@ class NeuralProphetWrapper(BaseWrapper):
         'seasonality_mode': 'multiplicative',
     }]
 
-    @staticmethod
-    def _evaluate(auto_ml, cur_wrapper):
+    def evaluate(self):
         prefix = 'NeuralProphet'
 
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
 
-        y_val_matrix = auto_ml._create_validation_matrix(
-            val_y=cur_wrapper.validation['y'].values.T)
+        y_val_matrix = self.auto_ml._create_validation_matrix(
+            val_y=self.validation['y'].values.T)
 
         for c, params in tqdm(enumerate(NeuralProphetWrapper.params_list)):
-            cur_wrapper.train(params)
+            self.train(params)
 
-            auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.auto_ml.evaluation_results[prefix+str(c)] = {}
 
-            y_pred = cur_wrapper.predict(
-                cur_wrapper.validation, max(auto_ml.important_future_timesteps))
+            y_pred = self.predict(
+                self.validation, max(self.auto_ml.important_future_timesteps))
 
             # selecting only the important timesteps
             y_pred = y_pred[:, [-(n-1)
-                                for n in auto_ml.important_future_timesteps]]
-            y_pred = y_pred[:-max(auto_ml.important_future_timesteps), :]
+                                for n in self.auto_ml.important_future_timesteps]]
+            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
 
-            auto_ml.evaluation_results[prefix +
-                                       str(c)] = auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            self.auto_ml.evaluation_results[prefix +
+                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
 
-            wrapper_list.append(copy.copy(cur_wrapper))
+            wrapper_list.append(copy.copy(self))
 
         return prefix, wrapper_list
