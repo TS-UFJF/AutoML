@@ -176,6 +176,10 @@ class TFTWrapper(BaseWrapper):
         if not self.target_label in data.columns:
             data[self.target_label] = 0
 
+    def clear_excess_data(self):
+        del self.training
+        del self.validation
+
     def predict(self, X, future_steps, history):
         predictions = []
 

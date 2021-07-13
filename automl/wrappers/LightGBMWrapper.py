@@ -18,7 +18,7 @@ class LightGBMWrapper(BaseWrapper):
         self.index_label = self.automl.index_label
         self.target_label = self.automl.target_label
         self.last_x = data.drop(
-            [self.index_label, self.target_label], axis=1).tail(1)
+            [self.index_label, self.target_label], axis=1).tail(1).copy()
 
         X = self.data[self.past_labels]
         y = self.data[self.target_label]
@@ -35,6 +35,11 @@ class LightGBMWrapper(BaseWrapper):
     def train(self, model_params):
         self.model = lgb.LGBMRegressor(**model_params)
         self.model.fit(self.training[0], self.training[1])
+
+    def clear_excess_data(self):
+        del self.data
+        del self.training
+        del self.validation
 
     def predict(self, X, future_steps):
         """

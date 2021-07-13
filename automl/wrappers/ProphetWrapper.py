@@ -37,12 +37,17 @@ class ProphetWrapper(BaseWrapper):
 
         self.training = self.data.iloc[:train_size]
         self.validation = self.data.iloc[train_size:]
-        self.last_x = self.validation.iloc[[-1]]
+        self.last_x = self.validation.iloc[[-1]].copy()
 
     def train(self, model_params):
         # uncertainty_samples = False to speed up the prediction
         self.model = Prophet(uncertainty_samples=False, **model_params)
         self.model.fit(self.training)
+
+    def clear_excess_data(self):
+        del self.data
+        del self.training
+        del self.validation
 
     def predict(self, X, future_steps):
         """

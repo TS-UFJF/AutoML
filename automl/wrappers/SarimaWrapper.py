@@ -32,7 +32,7 @@ class SarimaWrapper(BaseWrapper):
         self.training = self.data.iloc[:train_size]
         self.validation = self.data.iloc[train_size:]
 
-        self.last_x = self.validation[self.target_label]
+        self.last_x = self.validation[self.target_label].copy()
 
         # Setting parameters possibilities
         # set parameter range
@@ -61,6 +61,11 @@ class SarimaWrapper(BaseWrapper):
             del to_train
         except LinAlgError as er:  # can occur an matrix generation error during the calculations
             print(er)
+
+    def clear_excess_data(self):
+        del self.data
+        del self.training
+        del self.validation
 
     def predict(self, X, future_steps):
         """

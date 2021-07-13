@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import warnings
+import gc
 from sklearn.metrics import mean_squared_error
 from .metrics import weighted_quantile_loss, weighted_absolute_percentage_error
 from .transformer import DataShift
@@ -73,21 +74,20 @@ class AutoML:
 
         """
 
-        data = self.data.copy()
+        self.treated_data = self.data.copy()
 
-        self.index_label, self.target_label = tuple(data.columns)
+        self.index_label, self.target_label = tuple(self.treated_data.columns)
 
         # date column to datetime type
-        data[self.index_label] = pd.to_datetime(data[self.index_label])
+        self.treated_data[self.index_label] = pd.to_datetime(
+            self.treated_data[self.index_label])
         # removing timezone
-        data[self.index_label] = data[self.index_label].dt.tz_localize(None)
+        self.treated_data[self.index_label] = self.treated_data[self.index_label].dt.tz_localize(
+            None)
 
         # find the best past lags value
-        self._data_shift.fit(data)
+        self._data_shift.fit(self.treated_data)
         self.oldest_lag = int(max(self._data_shift.past_lags)) + 1
-
-        for wrapper in self.wrappers.values():
-            wrapper.transform_data(data.copy())
 
     def _evaluate_model(self, y_val, y_pred):
         """
@@ -128,8 +128,11 @@ class AutoML:
         wrapper_result_dict = {}
 
         for cur_wrapper in self.wrappers.values():
+            cur_wrapper.transform_data(self.treated_data.copy())
             prefix, wrapper_list = cur_wrapper.evaluate()
             wrapper_result_dict[prefix] = wrapper_list
+            cur_wrapper.clear_excess_data()
+            gc.collect()
 
         # Choose the best model comparing the default prediction metric results
         wape_values = {}
