@@ -89,8 +89,8 @@ class LSTMWrapper(BaseWrapper):
         cur_X = X.copy()
 
         for step in range(future_steps):
-            cur_X = cur_X[:, self.past_lags, :]
-            Y_hat[:, step] = np.squeeze(self.model.predict(cur_X))
+            to_predict = cur_X[:, self.past_lags, :]
+            Y_hat[:, step] = np.squeeze(self.model.predict(to_predict))
             cur_X = np.roll(cur_X, -1)
 
             cur_X[:, -1, 0] = Y_hat[:, step]
