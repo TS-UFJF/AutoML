@@ -111,21 +111,21 @@ class SarimaWrapper(BaseWrapper):
 
         random_params = random.sample(self.params_list, 5)
 
-        y_val_matrix = self.auto_ml._create_validation_matrix(
+        y_val_matrix = self.automl._create_validation_matrix(
             val_y=self.validation[self.target_label].values.T)
 
         for c, params in tqdm(enumerate(random_params)):
 
             self.train(params)
 
-            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.automl.evaluation_results[prefix+str(c)] = {}
 
             y_pred = np.array(self.predict(
-                self.validation, max(self.auto_ml.important_future_timesteps)))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
+                self.validation, max(self.automl.important_future_timesteps)))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
-            self.auto_ml.evaluation_results[prefix +
-                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
+            self.automl.evaluation_results[prefix +
+                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
 
             wrapper_list.append(copy.copy(self))
 
