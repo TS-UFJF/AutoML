@@ -133,21 +133,26 @@ class LSTMWrapper(BaseWrapper):
 
         print(f'Evaluating {prefix}')
 
-        wrapper_list = []
+        eval_list = []
+
         y_val_matrix = self.automl._create_validation_matrix(
             self.validation[1].T)
 
         for c, params in tqdm(enumerate(LSTMWrapper.params_list)):
-            self.automl.evaluation_results[prefix+str(c)] = {}
             self.train(params)
 
             y_pred = np.array(self.predict(
                 self.validation[0], max(self.automl.important_future_timesteps)))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
             y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
-            self.automl.evaluation_results[prefix +
-                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
 
-            wrapper_list.append(copy.copy(self))
+            cur_eval = {
+                "results": self.automl._evaluate_model(y_val_matrix.T, y_pred),
+                "model": copy.copy(self.model),
+                "name": f'{prefix}-{c}',
+                "wrapper": self
+            }
 
-        return prefix, wrapper_list
+            eval_list.append(cur_eval)
+
+        return eval_list
