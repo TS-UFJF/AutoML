@@ -38,6 +38,12 @@ class BaseWrapper:
         """
         pass
 
+    def clear_excess_data(self):
+        """
+        Clears the data that will no longer be needed after evaluation.
+        """
+        pass
+
     def predict(self, X, future_steps):
         """
         Recieves the matrix 'X' with shape (instances, steps), and for each instance, it should make the prediction

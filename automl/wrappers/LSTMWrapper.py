@@ -20,7 +20,7 @@ class LSTMWrapper(BaseWrapper):
         self.index_label = self.automl.index_label
         self.target_label = self.automl.target_label
         self.last_x = data.drop(
-            [self.index_label, self.target_label], axis=1).tail(1)
+            [self.index_label, self.target_label], axis=1).tail(1).copy()
 
         X = self.data[self.past_labels]
         y = self.data[self.target_label]
@@ -68,6 +68,11 @@ class LSTMWrapper(BaseWrapper):
     def train(self, model_params):
         self.model = self.create_model(**model_params)
         self.model.fit(self.training[0], self.training[1])
+
+    def clear_excess_data(self):
+        del self.data
+        del self.training
+        del self.validation
 
     def predict(self, X, future_steps):
         """
@@ -129,19 +134,19 @@ class LSTMWrapper(BaseWrapper):
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
-        y_val_matrix = self.auto_ml._create_validation_matrix(
+        y_val_matrix = self.automl._create_validation_matrix(
             self.validation[1].T)
 
         for c, params in tqdm(enumerate(LSTMWrapper.params_list)):
-            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.automl.evaluation_results[prefix+str(c)] = {}
             self.train(params)
 
             y_pred = np.array(self.predict(
-                self.validation[0], max(self.auto_ml.important_future_timesteps)))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
+                self.validation[0], max(self.automl.important_future_timesteps)))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
-            self.auto_ml.evaluation_results[prefix +
-                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
+            self.automl.evaluation_results[prefix +
+                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
 
             wrapper_list.append(copy.copy(self))
 

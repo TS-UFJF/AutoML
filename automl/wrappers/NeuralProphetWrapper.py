@@ -37,12 +37,17 @@ class NeuralProphetWrapper(BaseWrapper):
 
         self.training = self.data.iloc[:train_size]
         self.validation = self.data.iloc[train_size:]
-        self.last_x = self.validation.iloc[[-1]]
+        self.last_x = self.validation.iloc[[-1]].copy()
 
     def train(self, model_params):
         self.model = NeuralProphet(
             **model_params, freq=pd.Timedelta(self.time_freq))
         self.model.fit(self.training)
+
+    def clear_excess_data(self):
+        del self.data
+        del self.training
+        del self.validation
 
     def predict(self, X, future_steps):
         """
@@ -114,24 +119,24 @@ class NeuralProphetWrapper(BaseWrapper):
 
         wrapper_list = []
 
-        y_val_matrix = self.auto_ml._create_validation_matrix(
+        y_val_matrix = self.automl._create_validation_matrix(
             val_y=self.validation['y'].values.T)
 
         for c, params in tqdm(enumerate(NeuralProphetWrapper.params_list)):
             self.train(params)
 
-            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.automl.evaluation_results[prefix+str(c)] = {}
 
             y_pred = self.predict(
-                self.validation, max(self.auto_ml.important_future_timesteps))
+                self.validation, max(self.automl.important_future_timesteps))
 
             # selecting only the important timesteps
             y_pred = y_pred[:, [-(n-1)
-                                for n in self.auto_ml.important_future_timesteps]]
-            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
+                                for n in self.automl.important_future_timesteps]]
+            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
 
-            self.auto_ml.evaluation_results[prefix +
-                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T, y_pred)
+            self.automl.evaluation_results[prefix +
+                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
 
             wrapper_list.append(copy.copy(self))
 

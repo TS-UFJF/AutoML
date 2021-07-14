@@ -176,6 +176,10 @@ class TFTWrapper(BaseWrapper):
         if not self.target_label in data.columns:
             data[self.target_label] = 0
 
+    def clear_excess_data(self):
+        del self.training
+        del self.validation
+
     def predict(self, X, future_steps, history):
         predictions = []
 
@@ -281,23 +285,23 @@ class TFTWrapper(BaseWrapper):
         print(f'Evaluating {prefix}')
 
         wrapper_list = []
-        y_val_matrix = self.auto_ml._create_validation_matrix(
+        y_val_matrix = self.automl._create_validation_matrix(
             self.validation[1].values.T)
 
         for c, params in tqdm(enumerate(TFTWrapper.params_list)):
-            self.auto_ml.evaluation_results[prefix+str(c)] = {}
+            self.automl.evaluation_results[prefix+str(c)] = {}
             self.train(max_epochs=50, **params)
 
             y_pred = np.array(self.predict(
                 self.validation[0],
-                future_steps=max(self.auto_ml.important_future_timesteps),
+                future_steps=max(self.automl.important_future_timesteps),
                 history=self.last_period,
-            ))[:, [-(n-1) for n in self.auto_ml.important_future_timesteps]]
+            ))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(self.auto_ml.important_future_timesteps), :]
+            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
 
-            self.auto_ml.evaluation_results[prefix +
-                                            str(c)] = self.auto_ml._evaluate_model(y_val_matrix.T.squeeze(), y_pred)
+            self.automl.evaluation_results[prefix +
+                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T.squeeze(), y_pred)
 
             wrapper_list.append(copy.copy(self))
 
