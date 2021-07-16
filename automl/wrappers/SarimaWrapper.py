@@ -107,7 +107,7 @@ class SarimaWrapper(BaseWrapper):
 
         print(f'Evaluating {prefix}')
 
-        wrapper_list = []
+        eval_list = []
 
         random_params = random.sample(self.params_list, 5)
 
@@ -115,18 +115,20 @@ class SarimaWrapper(BaseWrapper):
             val_y=self.validation[self.target_label].values.T)
 
         for c, params in tqdm(enumerate(random_params)):
-
             self.train(params)
-
-            self.automl.evaluation_results[prefix+str(c)] = {}
 
             y_pred = np.array(self.predict(
                 self.validation, max(self.automl.important_future_timesteps)))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
             y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
-            self.automl.evaluation_results[prefix +
-                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
 
-            wrapper_list.append(copy.copy(self))
+            cur_eval = {
+                "results": self.automl._evaluate_model(y_val_matrix.T, y_pred),
+                "model": copy.copy(self.model),
+                "name": f'{prefix}-{c}',
+                "wrapper": self
+            }
 
-        return prefix, wrapper_list
+            eval_list.append(cur_eval)
+
+        return eval_list

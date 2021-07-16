@@ -58,7 +58,7 @@ class AutoML:
         self._data_shift = DataShift(nlags=self.nlags)
 
         # results obtained during evaluation
-        self.evaluation_results = {}
+        self.evaluation_results = []
 
         # the chosen model
         self.model = None
@@ -125,26 +125,16 @@ class AutoML:
         """
         # Vamos fazer com os modelos sempre usando a api do Scikit Learn pq a gnt vai usar ele para o RandomSearch
 
-        wrapper_result_dict = {}
-
         for cur_wrapper in self.wrappers.values():
             cur_wrapper.transform_data(self.treated_data.copy())
-            prefix, wrapper_list = cur_wrapper.evaluate()
-            wrapper_result_dict[prefix] = wrapper_list
+            eval_list = cur_wrapper.evaluate()
+            self.evaluation_results += eval_list
             cur_wrapper.clear_excess_data()
             gc.collect()
 
-        # Choose the best model comparing the default prediction metric results
-        wape_values = {}
-        for x in self.evaluation_results.items():
-            wape_values[x[0]] = x[1]['wape']
-        min_metric = min(wape_values, key=wape_values.get)
-
-        for prefix in sorted(list(wrapper_result_dict.keys()), key=lambda x: len(x), reverse=True):
-            if prefix in min_metric:
-                idx = int(min_metric[-1])
-                self.model = wrapper_result_dict[prefix][idx]
-                self.model_name = prefix+str(idx)
+        # Ordering the models acording to the results and setting the best model as the current model
+        self.evaluation_results.sort(key=lambda item: item["results"]["wape"])
+        self.set_evaluated_model(0)
 
     def predict(self, X, future_steps, history=[]):
         """
@@ -170,15 +160,24 @@ class AutoML:
 
         return y
 
+    def set_evaluated_model(self, evaluation_results_index: int):
+        """
+        Sets the "evaluation_results_intex"-th item of self.evaluation_results as the model currently
+        being used by AutoML
+
+        :param evaluation_results_index:
+            The index in self.evaluation_results of the model being set.
+        """
+        self.evaluation_results[evaluation_results_index]["wrapper"].model = self.evaluation_results[evaluation_results_index]["model"]
+        self.model = self.evaluation_results[evaluation_results_index]["wrapper"]
+        self.model_name = self.evaluation_results[evaluation_results_index]["name"]
+
     def next(self, future_steps):
         """
         Predicts the next "future_steps" steps into the future using the data inserted for training.
 
         :param future_steps:
             Number of steps in the future to predict.
-
-        :param quantile:
-            Use quantile models instead of the mean based.
 
         """
         return self.model.next(self.data, future_steps)

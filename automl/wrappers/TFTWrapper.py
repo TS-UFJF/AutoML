@@ -284,12 +284,12 @@ class TFTWrapper(BaseWrapper):
 
         print(f'Evaluating {prefix}')
 
-        wrapper_list = []
+        eval_list = []
+
         y_val_matrix = self.automl._create_validation_matrix(
             self.validation[1].values.T)
 
         for c, params in tqdm(enumerate(TFTWrapper.params_list)):
-            self.automl.evaluation_results[prefix+str(c)] = {}
             self.train(max_epochs=50, **params)
 
             y_pred = np.array(self.predict(
@@ -300,9 +300,13 @@ class TFTWrapper(BaseWrapper):
 
             y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
 
-            self.automl.evaluation_results[prefix +
-                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T.squeeze(), y_pred)
+            cur_eval = {
+                "results": self.automl._evaluate_model(y_val_matrix.T.squeeze(), y_pred),
+                "model": copy.copy(self.model),
+                "name": f'{prefix}-{c}',
+                "wrapper": self
+            }
 
-            wrapper_list.append(copy.copy(self))
+            eval_list.append(cur_eval)
 
-        return prefix, wrapper_list
+        return eval_list

@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 class BaseWrapper:
@@ -96,6 +97,15 @@ class BaseWrapper:
 
         print(f'Evaluating {prefix}')
 
-        wrapper_list = []
+        eval_list = []
+        # Each item on this list will have the following format
 
-        return prefix, wrapper_list
+        cur_eval = {
+            "results": {},  # Evaluation results for each model
+            "model": copy.copy(self.model),
+            "name": f'{prefix}-param_index',
+            # param_index is the current parameter set's index on the list
+            "wrapper": self  # This will be used in the future to set the best model onto the wrapper
+        }
+
+        return eval_list

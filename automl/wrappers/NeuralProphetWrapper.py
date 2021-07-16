@@ -117,15 +117,13 @@ class NeuralProphetWrapper(BaseWrapper):
 
         print(f'Evaluating {prefix}')
 
-        wrapper_list = []
+        eval_list = []
 
         y_val_matrix = self.automl._create_validation_matrix(
             val_y=self.validation['y'].values.T)
 
         for c, params in tqdm(enumerate(NeuralProphetWrapper.params_list)):
             self.train(params)
-
-            self.automl.evaluation_results[prefix+str(c)] = {}
 
             y_pred = self.predict(
                 self.validation, max(self.automl.important_future_timesteps))
@@ -135,9 +133,13 @@ class NeuralProphetWrapper(BaseWrapper):
                                 for n in self.automl.important_future_timesteps]]
             y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
 
-            self.automl.evaluation_results[prefix +
-                                           str(c)] = self.automl._evaluate_model(y_val_matrix.T, y_pred)
+            cur_eval = {
+                "results": self.automl._evaluate_model(y_val_matrix.T, y_pred),
+                "model": copy.copy(self.model),
+                "name": f'{prefix}-{c}',
+                "wrapper": self
+            }
 
-            wrapper_list.append(copy.copy(self))
+            eval_list.append(cur_eval)
 
-        return prefix, wrapper_list
+        return eval_list
