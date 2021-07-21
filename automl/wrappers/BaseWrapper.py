@@ -103,6 +103,7 @@ class BaseWrapper:
         cur_eval = {
             "results": {},  # Evaluation results for each model
             "model": copy.copy(self.model),
+            "params": params,
             "name": f'{prefix}-param_index',
             # param_index is the current parameter set's index on the list
             "wrapper": self  # This will be used in the future to set the best model onto the wrapper

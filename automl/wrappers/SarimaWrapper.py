@@ -124,6 +124,7 @@ class SarimaWrapper(BaseWrapper):
 
             cur_eval = {
                 "results": self.automl._evaluate_model(y_val_matrix.T, y_pred),
+                "params": params,
                 "model": copy.copy(self.model),
                 "name": f'{prefix}-{c}',
                 "wrapper": self

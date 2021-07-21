@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import warnings
 import gc
+import pprint
 from sklearn.metrics import mean_squared_error
 from .metrics import weighted_quantile_loss, weighted_absolute_percentage_error
 from .transformer import DataShift
@@ -135,6 +136,18 @@ class AutoML:
         # Ordering the models acording to the results and setting the best model as the current model
         self.evaluation_results.sort(key=lambda item: item["results"]["wape"])
         self.set_evaluated_model(0)
+
+    def print_evaluation_results(self):
+        """
+        Prints the names, parameters and results of evaluation_results.
+        """
+        for evaluation in self.evaluation_results:
+            print("Model: ", evaluation['name'])
+            print("Results: ")
+            pprint.pprint(evaluation['results'])
+            print("Parameters: ")
+            pprint.pprint(evaluation['params'])
+            print("-----------------------------")
 
     def predict(self, X, future_steps, history=[]):
         """
