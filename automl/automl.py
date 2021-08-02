@@ -4,7 +4,7 @@ import warnings
 import gc
 import pprint
 from sklearn.metrics import mean_squared_error
-from .metrics import weighted_quantile_loss, weighted_absolute_percentage_error
+import metrics as met
 from .transformer import DataShift
 from .wrappers.LightGBMWrapper import LightGBMWrapper
 
@@ -92,17 +92,17 @@ class AutoML:
 
     def _evaluate_model(self, y_val, y_pred):
         """
-        Evaluate a specifc model given the data to be tested.
+        Evaluate a specific model given the data to be tested.
 
         :param model: Model to be evaluated.
-        :param X_val: X input to generate the predictions.
-        :param y_val: y values that represents the real values.
+        :param y_pred: predicted values, with shape [instances, time_steps].
+        :param y_val: y values that represents the real values, with shape [instances, time_steps].
 
         """
 
         results = {}
 
-        results['wape'] = weighted_absolute_percentage_error(y_val, y_pred)
+        results['wape'] = met.weighted_absolute_percentage_error(y_val, y_pred)
         results['rmse'] = mean_squared_error(y_val, y_pred, squared=False)
 
         return results
