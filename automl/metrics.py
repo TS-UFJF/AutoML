@@ -1,5 +1,8 @@
 import numpy as np
 
+# When inplementing new metrics remember that AutoML passes a 2D array
+# with shape [instances, timesteps]
+
 
 def weighted_quantile_loss(quantile, y_true, quantile_pred):
     """
@@ -40,9 +43,12 @@ def weighted_absolute_percentage_error(y_true, y_pred):
     return loss
 
 
-def mean_absolute_percentage_error(y_true, y_pred):
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+def mean_absolute_percentage_error(y_true, y_pred, average=True):
+    mape = np.mean(np.abs((y_true - y_pred) / y_true), axis=1) * 100
+    if(average):
+        return np.mean(mape)
+    else:
+        return mape
 
 
 def root_relative_squared_error(y_true, y_pred, average=True):
@@ -54,6 +60,6 @@ def root_relative_squared_error(y_true, y_pred, average=True):
     numerator = np.sum(np.power(y_pred-y_true, 2), axis=1)
     denominator = np.sum(y_true-average_y_true, axis=1)
     if(average):
-        return np.sum(np.sqrt(numerator/denominator))
+        return np.mean(np.sqrt(numerator/denominator))
     else:
         return np.sqrt(numerator/denominator)
