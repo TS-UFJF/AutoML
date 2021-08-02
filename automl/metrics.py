@@ -60,3 +60,13 @@ def root_relative_squared_error(y_true, y_pred, multioutput='uniform_average'):
     numerator = np.sum(np.power(y_pred-y_true, 2), axis=1)
     denominator = np.sum(y_true-average_y_true, axis=1)
     return _process_multioutput((numerator/denominator), multioutput)
+
+
+def mean_absolute_scaled_error(y_true, y_pred, multioutput='uniform_average'):
+    # Base code: https://github.com/CamDavidsonPilon/Python-Numerics/blob/master/TimeSeries/MASE.py
+
+    n = y_pred.shape[0]
+    denominator = np.abs(np.diff(y_pred, axis=1)).sum(axis=1)/(n-1)
+    errors = np.abs(y_pred - y_true)
+
+    return _process_multioutput(errors.mean(axis=1)/denominator, multioutput)
