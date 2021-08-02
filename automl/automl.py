@@ -90,20 +90,23 @@ class AutoML:
         self._data_shift.fit(self.treated_data)
         self.oldest_lag = int(max(self._data_shift.past_lags)) + 1
 
-    def _evaluate_model(self, y_val, y_pred):
+    def _evaluate_model(self, y_true, y_pred):
         """
         Evaluate a specific model given the data to be tested.
 
         :param model: Model to be evaluated.
         :param y_pred: predicted values, with shape [instances, time_steps].
-        :param y_val: y values that represents the real values, with shape [instances, time_steps].
+        :param y_true: y values that represents the real values, with shape [instances, time_steps].
 
         """
 
         results = {}
 
-        results['wape'] = met.weighted_absolute_percentage_error(y_val, y_pred)
-        results['rmse'] = mean_squared_error(y_val, y_pred, squared=False)
+        results['WAPE'] = met.weighted_absolute_percentage_error(
+            y_true, y_pred)
+        results['RMSE'] = mean_squared_error(y_true, y_pred, squared=False)
+        results['MAPE'] = met.mean_absolute_percentage_error(y_true, y_pred)
+        results['RSE'] = met.root_relative_squared_error(y_true, y_pred)
 
         return results
 
