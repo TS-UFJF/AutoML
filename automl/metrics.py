@@ -4,43 +4,26 @@ import numpy as np
 # with shape [instances, timesteps]
 
 
-def weighted_quantile_loss(quantile, y_true, quantile_pred):
-    """
-    The Weighted Quantile Loss (wQL) metric measures the accuracy of predictions
-    at a specified quantile.
-
-    :param quantile: Specific quantile to be analyzed.
-    :param y_true: The observed values.
-    :param quantile_pred: Quantile values that the model predicted.
-
-    """
-
-    # vectorize max function to apply over matrices
-    max_vec = np.vectorize(max)
-
-    first_term = quantile * max_vec(y_true - quantile_pred, 0)
-    second_term = (1 - quantile) * max_vec(quantile_pred - y_true, 0)
-
-    loss = 2 * (np.sum(first_term + second_term) / np.sum(y_true))
-
-    return loss
-
-
-def weighted_absolute_percentage_error(y_true, y_pred):
+def weighted_absolute_percentage_error(y_true, y_pred, average=True):
     """
     The Weighted Absolute Percentage Error (WAPE) metric measures the overall
     deviation of forecasted values from observed values.
 
     :param y_true: The observed values.
     :param y_pred: The predicted values.
+    :param average: If average is set to True, returns the average of all instances,
+        otherwise, returns an array of the WAPEs of all instances.
 
     """
 
-    absolute_error_sum = np.sum(np.abs(y_true - y_pred))
+    absolute_error_sum = np.sum(np.abs(y_true - y_pred), axis=1)
 
-    loss = absolute_error_sum / np.sum(np.abs(y_true))
+    loss = absolute_error_sum / np.sum(np.abs(y_true), axis=1)
 
-    return loss
+    if(average):
+        return np.mean(loss)
+    else:
+        return loss
 
 
 def mean_absolute_percentage_error(y_true, y_pred, average=True):
