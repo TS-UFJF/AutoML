@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+import collections
 
 
 def _process_multioutput(arr, multioutput):
@@ -7,7 +8,7 @@ def _process_multioutput(arr, multioutput):
         return np.mean(arr)
     if(multioutput == 'raw_values'):
         return arr
-    if(isinstance(multioutput, list) and not isinstance(multioutput, str)):
+    if(isinstance(multioutput, collections.Sequence) and not isinstance(multioutput, str)):
         if((np.squeeze(np.array(multioutput)).shape[0] == len(arr)) and np.squeeze(np.array(multioutput)).ndim == 1):
             np.average(arr, weights=np.squeeze(np.array(multioutput)))
         else:
