@@ -66,3 +66,19 @@ def mean_absolute_scaled_error(y_true, y_pred, multioutput='uniform_average'):
     errors = np.abs(y_pred - y_true)
 
     return _process_multioutput(errors.mean(axis=1)/denominator, multioutput)
+
+
+def symmetric_mean_absolute_percentage_error(y_true, y_pred, multioutput='uniform_average'):
+    smape = 1/y_true.shape[1] * np.sum(2 * np.abs(y_pred -
+                                                  y_true) / (np.abs(y_true) + np.abs(y_pred)), axis=1)
+
+    return _process_multioutput(smape, multioutput)
+
+
+def msMAPE(y_true, y_pred, epsilon=0.1, multioutput='uniform_average'):
+    denominator = np.max(
+        [(np.abs(y_true) + np.abs(y_pred) + epsilon), np.ones(y_true.shape)*(.5 + epsilon)])
+    msmape = 1/y_true.shape[1] * np.sum(2 * np.abs(y_pred -
+                                                   y_true) / denominator, axis=1)
+
+    return _process_multioutput(msmape, multioutput)

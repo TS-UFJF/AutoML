@@ -109,6 +109,9 @@ class AutoML:
         results['RSE'] = met.root_relative_squared_error(y_true, y_pred)
         results['MASE'] = met.mean_absolute_scaled_error(y_true, y_pred)
         results['MAE'] = mean_absolute_error(y_true, y_pred)
+        results['sMAPE'] = met.symmetric_mean_absolute_percentage_error(
+            y_true, y_pred)
+        results['msMAPE'] = met.msMAPE(y_true, y_pred)
 
         return results
 
