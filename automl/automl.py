@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 import gc
 import pprint
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 import metrics as met
 from .transformer import DataShift
 from .wrappers.LightGBMWrapper import LightGBMWrapper

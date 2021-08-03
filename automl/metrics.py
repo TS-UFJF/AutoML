@@ -47,11 +47,6 @@ def weighted_absolute_percentage_error(y_true, y_pred, multioutput='uniform_aver
     return _process_multioutput(loss, multioutput)
 
 
-def mean_absolute_percentage_error(y_true, y_pred, multioutput='uniform_average'):
-    mape = np.mean(np.abs((y_true - y_pred) / y_true), axis=1) * 100
-    return _process_multioutput(mape, multioutput)
-
-
 def root_relative_squared_error(y_true, y_pred, multioutput='uniform_average'):
     """
     Vectorized implementation of RSE
