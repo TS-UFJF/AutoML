@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+import collections
 
 
 def _process_multioutput(arr, multioutput):
@@ -7,7 +8,7 @@ def _process_multioutput(arr, multioutput):
         return np.mean(arr)
     if(multioutput == 'raw_values'):
         return arr
-    if(isinstance(multioutput, list) and not isinstance(multioutput, str)):
+    if(isinstance(multioutput, collections.Sequence) and not isinstance(multioutput, str)):
         if((np.squeeze(np.array(multioutput)).shape[0] == len(arr)) and np.squeeze(np.array(multioutput)).ndim == 1):
             np.average(arr, weights=np.squeeze(np.array(multioutput)))
         else:
@@ -46,11 +47,6 @@ def weighted_absolute_percentage_error(y_true, y_pred, multioutput='uniform_aver
     return _process_multioutput(loss, multioutput)
 
 
-def mean_absolute_percentage_error(y_true, y_pred, multioutput='uniform_average'):
-    mape = np.mean(np.abs((y_true - y_pred) / y_true), axis=1) * 100
-    return _process_multioutput(mape, multioutput)
-
-
 def root_relative_squared_error(y_true, y_pred, multioutput='uniform_average'):
     """
     Vectorized implementation of RSE
@@ -60,3 +56,29 @@ def root_relative_squared_error(y_true, y_pred, multioutput='uniform_average'):
     numerator = np.sum(np.power(y_pred-y_true, 2), axis=1)
     denominator = np.sum(y_true-average_y_true, axis=1)
     return _process_multioutput((numerator/denominator), multioutput)
+
+
+def mean_absolute_scaled_error(y_true, y_pred, multioutput='uniform_average'):
+    # Base code: https://github.com/CamDavidsonPilon/Python-Numerics/blob/master/TimeSeries/MASE.py
+
+    n = y_pred.shape[0]
+    denominator = np.abs(np.diff(y_pred, axis=1)).sum(axis=1)/(n-1)
+    errors = np.abs(y_pred - y_true)
+
+    return _process_multioutput(errors.mean(axis=1)/denominator, multioutput)
+
+
+def symmetric_mean_absolute_percentage_error(y_true, y_pred, multioutput='uniform_average'):
+    smape = 1/y_true.shape[1] * np.sum(2 * np.abs(y_pred -
+                                                  y_true) / (np.abs(y_true) + np.abs(y_pred)), axis=1)
+
+    return _process_multioutput(smape, multioutput)
+
+
+def msMAPE(y_true, y_pred, epsilon=0.1, multioutput='uniform_average'):
+    denominator = np.max(
+        [(np.abs(y_true) + np.abs(y_pred) + epsilon), np.ones(y_true.shape)*(.5 + epsilon)])
+    msmape = 1/y_true.shape[1] * np.sum(2 * np.abs(y_pred -
+                                                   y_true) / denominator, axis=1)
+
+    return _process_multioutput(msmape, multioutput)
