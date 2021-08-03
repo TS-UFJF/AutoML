@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 import gc
 import pprint
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 import metrics as met
 from .transformer import DataShift
 from .wrappers.LightGBMWrapper import LightGBMWrapper
@@ -105,9 +105,10 @@ class AutoML:
         results['WAPE'] = met.weighted_absolute_percentage_error(
             y_true, y_pred)
         results['RMSE'] = mean_squared_error(y_true, y_pred, squared=False)
-        results['MAPE'] = met.mean_absolute_percentage_error(y_true, y_pred)
+        results['MAPE'] = mean_absolute_percentage_error(y_true, y_pred)
         results['RSE'] = met.root_relative_squared_error(y_true, y_pred)
         results['MASE'] = met.mean_absolute_scaled_error(y_true, y_pred)
+        results['MAE'] = mean_absolute_error(y_true, y_pred)
 
         return results
 
