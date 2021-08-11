@@ -159,7 +159,7 @@ class AutoML:
             gc.collect()
 
         # Ordering the models acording to the results and setting the best model as the current model
-        self.evaluation_results.sort(key=lambda item: item["results"]["wape"])
+        self.evaluation_results.sort(key=lambda item: item["results"]["Mean WAPE"])
         self.set_evaluated_model(0)
 
     def print_evaluation_results(self):
