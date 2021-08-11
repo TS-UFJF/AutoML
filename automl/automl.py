@@ -4,7 +4,7 @@ import warnings
 import gc
 import pprint
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
-import metrics as met
+from .metrics import *
 from .transformer import DataShift
 from .wrappers.LightGBMWrapper import LightGBMWrapper
 
@@ -102,33 +102,33 @@ class AutoML:
 
         results = {}
 
-        results['Mean WAPE'] = met.weighted_absolute_percentage_error(
+        results['Mean WAPE'] = weighted_absolute_percentage_error(
             y_true, y_pred)
         results['Mean RMSE'] = mean_squared_error(
             y_true, y_pred, squared=False)
         results['Mean MAPE'] = mean_absolute_percentage_error(y_true, y_pred)
-        results['Mean RSE'] = met.root_relative_squared_error(y_true, y_pred)
-        results['Mean MASE'] = met.mean_absolute_scaled_error(y_true, y_pred)
+        results['Mean RSE'] = root_relative_squared_error(y_true, y_pred)
+        results['Mean MASE'] = mean_absolute_scaled_error(y_true, y_pred)
         results['Mean MAE'] = mean_absolute_error(y_true, y_pred)
-        results['Mean sMAPE'] = met.symmetric_mean_absolute_percentage_error(
+        results['Mean sMAPE'] = symmetric_mean_absolute_percentage_error(
             y_true, y_pred)
-        results['Mean msMAPE'] = met.msMAPE(y_true, y_pred)
-        results['Mean WAPE'] = met.weighted_absolute_percentage_error(
+        results['Mean msMAPE'] = msMAPE(y_true, y_pred)
+        results['Mean WAPE'] = weighted_absolute_percentage_error(
             y_true, y_pred)
         results['Median RMSE'] = np.median(mean_squared_error(
             y_true, y_pred, squared=False, multioutput='raw_values'))
         results['Median MAPE'] = np.median(mean_absolute_percentage_error(
             y_true, y_pred, multioutput='raw_values'))
-        results['Median RSE'] = np.median(met.root_relative_squared_error(
+        results['Median RSE'] = np.median(root_relative_squared_error(
             y_true, y_pred, multioutput='raw_values'))
-        results['Median MASE'] = np.median(met.mean_absolute_scaled_error(
+        results['Median MASE'] = np.median(mean_absolute_scaled_error(
             y_true, y_pred, multioutput='raw_values'))
         results['Median MAE'] = np.median(mean_absolute_error(
             y_true, y_pred, multioutput='raw_values'))
-        results['Median sMAPE'] = np.median(met.symmetric_mean_absolute_percentage_error(
+        results['Median sMAPE'] = np.median(symmetric_mean_absolute_percentage_error(
             y_true, y_pred, multioutput='raw_values'))
         results['Median msMAPE'] = np.median(
-            met.msMAPE(y_true, y_pred, multioutput='raw_values'))
+            msMAPE(y_true, y_pred, multioutput='raw_values'))
 
         return results
 
