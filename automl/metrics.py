@@ -53,8 +53,8 @@ def root_relative_squared_error(y_true, y_pred, multioutput='uniform_average'):
     """
     average_y_true = np.repeat(
         np.mean(y_true, axis=0, keepdims=True).T, y_true.shape[0], axis=1)
-    numerator = np.sum(np.power(y_pred-y_true, 2), axis=1)
-    denominator = np.sum(y_true-average_y_true, axis=1)
+    numerator = np.sum(np.power(y_true-y_pred, 2), axis=1)
+    denominator = np.sum(y_true-average_y_true.T, axis=1)
     return _process_multioutput((numerator/denominator), multioutput)
 
 
