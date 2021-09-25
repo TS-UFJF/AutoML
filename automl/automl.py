@@ -10,7 +10,9 @@ from .wrappers.LightGBMWrapper import LightGBMWrapper
 
 
 class AutoML:
-    def __init__(self, path, jobs=0, fillnan='ffill', nlags=24, wrapper_constructors=[LightGBMWrapper], important_future_timesteps=[1], train_val_split=0.8):
+    def __init__(self, path, jobs=0, fillnan='ffill', nlags=24, 
+                wrapper_constructors=[LightGBMWrapper], important_future_timesteps=[1],
+                train_val_split=0.8, limit_multplicity=5):
         """
         AutoML is an auto machine learning project with focus on predict
         time series using simple usage and high-level understanding over
@@ -43,6 +45,7 @@ class AutoML:
         self.jobs = jobs
         self.fillnan = fillnan
         self.nlags = nlags
+        self.limit_multplicity = limit_multplicity
 
         self.data = pd.read_csv(self.path)
         self.target_label = None
@@ -56,7 +59,10 @@ class AutoML:
         if len(self.data.columns) > 2:
             raise Exception('Data has more than 2 columns.')
 
-        self._data_shift = DataShift(nlags=self.nlags)
+        self.important_future_timesteps = self._limit_future_timesteps(self.important_future_timesteps,
+                                                                        self.limit_multplicity)
+
+        self._data_shift = DataShift(nlags=self.nlags, future_lags=self.important_future_timesteps)
 
         # results obtained during evaluation
         self.evaluation_results = []
@@ -68,6 +74,24 @@ class AutoML:
 
         self._transform_data()
         self._evaluate()
+
+    def _limit_future_timesteps(self, future_timesteps, mult):
+        """
+        Limit the future time steps to be evaluated based on the following
+        equation:
+            (data_legth - nlags) / (mult + 1)
+        """
+
+        limit = (len(self.data) - self.nlags)//(mult + 1)
+
+        last_timestemp = max(future_timesteps)
+
+        if last_timestemp > limit:
+            print(f"The future time step evaluation limit for this data set length is {limit}. The evaluation will be cut down to the limit value.")
+
+            future_timesteps = list(filter(lambda x: x <= limit, future_timesteps))
+
+        return future_timesteps
 
     def _transform_data(self):
         """
