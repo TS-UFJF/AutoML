@@ -5,12 +5,14 @@ import pandas as pd
 
 class DataShift(BaseEstimator, TransformerMixin):
 
-    def __init__(self, threshold=0.05, nlags=24, past_lags=None):
+    def __init__(self, threshold=0.05, nlags=24, past_lags=None, future_lags=None):
         self.past_labels = []
         self.threshold = threshold
         self.nlags = nlags
         self.past_lags = past_lags
+        self.future_lags = future_lags
         self.past_labels = []
+        self.future_labels = []
         self._target_label = ''
 
     def _calculate_past_lags(self, data):
@@ -36,7 +38,7 @@ class DataShift(BaseEstimator, TransformerMixin):
 
         return past_lags
 
-    def _data_shift(self, data, past_lags):
+    def _data_shift(self, data, past_lags, future_lags=[1]):
         """
         Shift the data by past lags inserting the past time steps as new columns.
 
@@ -50,28 +52,38 @@ class DataShift(BaseEstimator, TransformerMixin):
 
         """
         X = []
+        y = []
 
         # max number of lags possible
-        max_lags = max(past_lags) + 1
+        max_past_lags = max(past_lags) + 1
+        max_future_lags = max(future_lags)
 
-        idx = max_lags
+        idx = max_past_lags
         while True:
-            new_line = data.iloc[idx - max_lags : idx, 1].values
-            
-            X.append(new_line)
+            new_X_line = data.iloc[idx - max_past_lags : idx, 1].values
+            X.append(new_X_line)
+
+            new_y_line = data.iloc[idx + 1: idx + max_future_lags, 1].values
+            y.append(new_y_line)
             
             idx += 1
 
-            if idx >= len(data): break
+            if idx + max_future_lags >= len(data): break
 
-        # label of each past lag going from -max_lags to -min_lags
+        # label of each past lag going from -max_past_lags to -min_lags
         past_labels = ['target_' + str(-(i))
-                       for i in range(max_lags, 0, -1)]
+                       for i in range(max_past_lags, 0, -1)]
+        
+        future_labels = ['target_' + "+" + str((i))
+                       for i in range(1, max_future_lags)]
 
-        data = data.iloc[max_lags:, :]
+        data = data.iloc[max_past_lags:-max_future_lags, :]
         data.loc[:, past_labels] = X
 
-        return data, past_labels
+        if future_labels:
+            data.loc[:, future_labels] = y
+
+        return data, past_labels, future_labels
 
     def filter_lags(self, data):
 
@@ -98,6 +110,6 @@ class DataShift(BaseEstimator, TransformerMixin):
     def transform(self, X):
         
         # add to the data the past lags
-        X_, self.past_labels = self._data_shift(X, self.past_lags)
+        X_, self.past_labels, self.future_labels = self._data_shift(X, self.past_lags, self.future_lags)
 
         return X_

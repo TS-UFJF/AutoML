@@ -22,33 +22,37 @@ class TFTWrapper(BaseWrapper):
         self.last_period = None
 
     def transform_data(self, data):
-
+        self.data = self.automl._data_shift.transform(data)
+        self.past_labels = self.automl._data_shift.past_labels
+        self.future_labels = self.automl._data_shift.future_labels
         self.past_lags = self.automl._data_shift.past_lags
         self.oldest_lag = int(max(self.past_lags))
         self.index_label = self.automl.index_label
         self.target_label = self.automl.target_label
 
         # External train and validation sets
-        X = data[[self.index_label]]
-        y = data[[self.target_label]]
+        X = self.data[[self.index_label]]
+        y = self.data[[self.target_label]+self.future_labels]
 
-        self.training = (X.loc[:int(len(data) * self.automl.train_val_split)],
-                         y.loc[:int(len(data) * self.automl.train_val_split)])
-        self.validation = (X.loc[int(len(data) * self.automl.train_val_split):],
-                           y.loc[int(len(data) * self.automl.train_val_split):])
+        self.training = (X.loc[:int(len(self.data) * self.automl.train_val_split)],
+                         y.loc[:int(len(self.data) * self.automl.train_val_split), self.target_label])
+        self.validation = (X.loc[int(len(self.data) * self.automl.train_val_split):],
+                           y.loc[int(len(self.data) * self.automl.train_val_split):])
+        
+        self.data = self.data[[self.index_label, self.target_label]]
 
         # intern train and validation sets, they use dataloaders to optimize the training routine
         # time index are epoch values
         # data["time_idx"] = (data[self.index_label] - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
-        data["time_idx"] = data.index
-        data['group_id'] = 'series'
+        self.data["time_idx"] = self.data.index
+        self.data['group_id'] = 'series'
 
         max_prediction_length = self.oldest_lag
         max_encoder_length = self.oldest_lag
         # training_cutoff = data["time_idx"].max() - max_prediction_length
 
         self.intern_training = TimeSeriesDataSet(
-            data[:int(len(data) * self.automl.train_val_split)],
+            self.data[:int(len(self.data) * self.automl.train_val_split)],
             time_idx="time_idx",
             group_ids=["group_id"],
             target=self.target_label,
@@ -69,10 +73,10 @@ class TFTWrapper(BaseWrapper):
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
         # for each series
         self._intern_validation = TimeSeriesDataSet.from_dataset(
-            self.intern_training, data, predict=True, stop_randomization=True)
+            self.intern_training, self.data, predict=True, stop_randomization=True)
 
         # store the last input to use as encoder data to next predictions
-        self.last_period = data.iloc[-(self.oldest_lag*2+1):].copy()
+        self.last_period = self.data.iloc[-(self.oldest_lag*2+1):].copy()
 
     def train(self,
               max_epochs=25,
@@ -106,6 +110,7 @@ class TFTWrapper(BaseWrapper):
             # limit_train_batches=30,  # coment in for training, running validation every 30 batches
             # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
             callbacks=[early_stop_callback],
+            logger=False
         )
 
         self.model = TemporalFusionTransformer.from_dataset(
@@ -119,6 +124,7 @@ class TFTWrapper(BaseWrapper):
             output_size=3,  # 3 quantiles by default
             loss=QuantileLoss([.1, .5, .9]),
             reduce_on_plateau_patience=reduce_on_plateau_patience,
+            log_interval=0
         )
 
         # fit network
@@ -286,9 +292,6 @@ class TFTWrapper(BaseWrapper):
 
         eval_list = []
 
-        y_val_matrix = self.automl._create_validation_matrix(
-            self.validation[1].values.T)
-
         for c, params in tqdm(enumerate(TFTWrapper.params_list)):
             self.train(max_epochs=50, **params)
 
@@ -298,10 +301,8 @@ class TFTWrapper(BaseWrapper):
                 history=self.last_period,
             ))[:, [-(n-1) for n in self.automl.important_future_timesteps]]
 
-            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
-
             cur_eval = {
-                "results": self.automl._evaluate_model(y_val_matrix.T.squeeze(), y_pred),
+                "results": self.automl._evaluate_model(self.validation[1].values, y_pred),
                 "params": params,
                 "model": copy.copy(self.model),
                 "name": f'{prefix}-{c}',

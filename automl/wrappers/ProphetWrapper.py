@@ -15,8 +15,9 @@ class ProphetWrapper(BaseWrapper):
         logging.getLogger('fbprophet').setLevel(logging.WARNING)
 
     def transform_data(self, data):
-        self.data = data
-
+        self.data = self.automl._data_shift.transform(data)
+        self.past_labels = self.automl._data_shift.past_labels
+        self.future_labels = self.automl._data_shift.future_labels
         self.index_label = self.automl.index_label
         self.target_label = self.automl.target_label
 
@@ -35,7 +36,7 @@ class ProphetWrapper(BaseWrapper):
 
         train_size = int(len(self.data) * self.automl.train_val_split)
 
-        self.training = self.data.iloc[:train_size]
+        self.training = self.data[['ds','y']].iloc[:train_size]
         self.validation = self.data.iloc[train_size:]
         self.last_x = self.validation.iloc[[-1]].copy()
 
@@ -119,22 +120,18 @@ class ProphetWrapper(BaseWrapper):
 
         eval_list = []
 
-        y_val_matrix = self.automl._create_validation_matrix(
-            val_y=self.validation['y'].values.T)
-
         for c, params in tqdm(enumerate(ProphetWrapper.params_list)):
             self.train(params)
 
             y_pred = self.predict(
-                self.validation, max(self.automl.important_future_timesteps))
+                self.validation[['ds','y']], max(self.automl.important_future_timesteps))
 
             # selecting only the important timesteps
             y_pred = y_pred[:, [-(n-1)
                                 for n in self.automl.important_future_timesteps]]
-            y_pred = y_pred[:-max(self.automl.important_future_timesteps), :]
 
             cur_eval = {
-                "results": self.automl._evaluate_model(y_val_matrix.T, y_pred),
+                "results": self.automl._evaluate_model(self.validation[['y']+self.future_labels].values, y_pred),
                 "params": params,
                 "model": copy.copy(self.model),
                 "name": f'{prefix}-{c}',
