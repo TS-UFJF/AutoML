@@ -27,6 +27,8 @@ class TFTWrapper(BaseWrapper):
         self.future_labels = self.automl._data_shift.future_labels
         self.past_lags = self.automl._data_shift.past_lags
         self.oldest_lag = int(max(self.past_lags))
+        self.oldest_lag = self.oldest_lag if self.oldest_lag > 1 else 2
+        self.max_prediction = int(max(self.automl._data_shift.future_lags))
         self.index_label = self.automl.index_label
         self.target_label = self.automl.target_label
 
@@ -47,7 +49,7 @@ class TFTWrapper(BaseWrapper):
         self.data["time_idx"] = self.data.index
         self.data['group_id'] = 'series'
 
-        max_prediction_length = self.oldest_lag
+        max_prediction_length = self.max_prediction if self.max_prediction > 1 else 2
         max_encoder_length = self.oldest_lag
         # training_cutoff = data["time_idx"].max() - max_prediction_length
 
@@ -197,8 +199,7 @@ class TFTWrapper(BaseWrapper):
             time_idx = [idx + self.last_period["time_idx"].max()
                         for idx in time_idx]
             X_temp[self.index_label] = pd.to_datetime(X_temp[self.index_label])
-            X_temp[self.index_label] = X_temp[self.index_label].dt.tz_localize(
-                None)
+            X_temp[self.index_label] = X_temp[self.index_label].dt.tz_localize(None)
             X_temp["time_idx"] = time_idx
             X_temp['group_id'] = 'series'
 
