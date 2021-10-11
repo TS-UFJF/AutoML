@@ -69,7 +69,7 @@ class TFTWrapper(BaseWrapper):
             add_relative_time_idx=True,
             add_target_scales=True,
             add_encoder_length=True,
-            # allow_missings=True
+            allow_missings=True
         )
 
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
@@ -78,7 +78,12 @@ class TFTWrapper(BaseWrapper):
             self.intern_training, self.data, predict=True, stop_randomization=True)
 
         # store the last input to use as encoder data to next predictions
-        self.last_period = self.data.iloc[-(self.oldest_lag*2+1):].copy()
+        max_lag = max(self.oldest_lag, max(self.automl.important_future_timesteps))
+        size = max_lag if max_lag*2+1 > len(self.training[0]) // 2 else max_lag*2+1
+        self.last_period = self.training[0].iloc[-(size):-1].copy()
+        self.last_period['values'] = self.training[1].iloc[-(size):].copy()
+        self.last_period["time_idx"] = self.last_period.index
+        self.last_period['group_id'] = 'series'
 
     def train(self,
               max_epochs=25,
