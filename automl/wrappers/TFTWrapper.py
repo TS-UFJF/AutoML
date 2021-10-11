@@ -69,7 +69,7 @@ class TFTWrapper(BaseWrapper):
             add_relative_time_idx=True,
             add_target_scales=True,
             add_encoder_length=True,
-            allow_missings=True
+            # allow_missings=True
         )
 
         # create validation set (predict=True) which means to predict the last max_prediction_length points in time
