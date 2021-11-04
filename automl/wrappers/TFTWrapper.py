@@ -78,9 +78,9 @@ class TFTWrapper(BaseWrapper):
             self.intern_training, self.data, predict=True, stop_randomization=True)
 
         # store the last input to use as encoder data to next predictions
-        max_lag = max(self.oldest_lag, max(self.automl.important_future_timesteps))
+        max_lag = max(self.oldest_lag, max(self.automl._data_shift.future_lags))
         size = max_lag if max_lag*2+1 > len(self.training[0]) // 2 else max_lag*2+1
-        self.last_period = self.training[0].iloc[-(size):-1].copy()
+        self.last_period = self.training[0].iloc[-(size):].copy()
         self.last_period['values'] = self.training[1].iloc[-(size):].copy()
         self.last_period["time_idx"] = self.last_period.index
         self.last_period['group_id'] = 'series'
@@ -201,7 +201,7 @@ class TFTWrapper(BaseWrapper):
         for i in range(len(X)):
             X_temp = history.append(X.iloc[:i], ignore_index=True)
             time_idx = list(range(len(X_temp)))  # refact to use real time idx
-            time_idx = [idx + self.last_period["time_idx"].max()
+            time_idx = [idx + history["time_idx"].max()
                         for idx in time_idx]
             X_temp[self.index_label] = pd.to_datetime(X_temp[self.index_label])
             X_temp[self.index_label] = X_temp[self.index_label].dt.tz_localize(None)
